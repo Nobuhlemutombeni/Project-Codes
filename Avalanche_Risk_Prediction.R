@@ -477,4 +477,31 @@ sum(diag(table(data_test$prediction, data_test$FAH_num))) /sum(table(data_test$p
 
 
 #==============================================
+# Predict ~~~plot of effect of wind speed
 
+
+dataM <- data_test %>% filter(!is.na(OAH_num), !is.na(X),!is.na(Y),!is.na(Air_Temp),
+                              !is.na(Wind_Dir),!is.na(Wind_Speed),!is.na(Precip_Code1),
+                              !is.na(Cloud),!is.na(Rain_at_900),!is.na(days_since_19Nov))
+
+mycols <- levels(dataM$OAH)
+newdata1 <- data.frame(Wind_Speed = seq(from = min(dataM$Wind_Speed), to = max(dataM$Wind_Speed), length.out = 500),
+                       Air_Temp = mean(dataM$Air_Temp),Precip_Code1 = mean(dataM$Precip_Code1),days_since_19Nov = mean(dataM$days_since_19Nov))
+
+
+ocat_model <- model8
+ocat_predict = predict(ocat_model, newdata = newdata1, type = "response")
+ocat_predict = as.data.frame(ocat_predict)
+colnames(ocat_predict) <- mycols
+ocat_predict <- ocat_predict %>%
+  mutate(x= newdata1$Wind_Speed) %>%
+  pivot_longer(1:5, names_to = "pred_level", values_to = "obs_val") 
+ocat_predict$pred_level <- factor(ocat_predict$pred_level, levels = mycols)
+
+ggplot(aes(x= x, y= obs_val),data=ocat_predict)+
+  facet_grid(.~pred_level)+
+  geom_line()+
+  xlab("Wind Speed") + ylab("Probability") + 
+  theme_dark() 
+
+#======================================
